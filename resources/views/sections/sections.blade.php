@@ -19,6 +19,9 @@
         <div class="d-flex">
             <h4 class="content-title mb-0 my-auto">الاعدادات</h4><span class="text-muted mt-1 tx-13 mr-2 mb-0">/
                 الاقسام</span>
+                <a href="{{route('products.store')}}">
+                    
+                </a>
         </div>
     </div>
 </div>
@@ -130,8 +133,8 @@
                         type="button"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <form action="" method="post">
-                        {{ csrf_field() }}
+                    <form action="{{ route('sections.store') }}" method="post">
+                        @csrf
 
                         <div class="form-group">
                             <label for="exampleInputEmail1">اسم القسم</label>
@@ -168,9 +171,8 @@
                 </div>
                 <div class="modal-body">
 
-                    <form action="" method="post" autocomplete="off">
-                        <!-- {{ method_field('patch') }} -->
-                        {{ csrf_field() }}
+                <form action="{{ route('sections.update') }}" method="post" autocomplete="off">
+                        @csrf
                         <div class="form-group">
                             <input type="hidden" name="id" id="id" value="">
                             <label for="recipient-name" class="col-form-label">اسم القسم:</label>
@@ -198,9 +200,9 @@
                     <h6 class="modal-title">حذف القسم</h6><button aria-label="Close" class="close" data-dismiss="modal"
                         type="button"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form action="" method="post">
-                    <!-- {{ method_field('delete') }} -->
-                    {{ csrf_field() }}
+                <form action="{{ route('sections.destroy') }}" method="post">
+                    {{ method_field('delete') }}
+                    @csrf
                     <div class="modal-body">
                         <p>هل انت متاكد من عملية الحذف ؟</p><br>
                         <input type="hidden" name="id" id="id" value="">
