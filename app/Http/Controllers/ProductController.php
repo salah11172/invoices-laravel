@@ -91,18 +91,29 @@ class ProductController extends Controller
     public function update(Request $request)
     {
 
-    //    $id = sections::where('section_name', $request->section_name)->first()->id;
+       $id = sections::where('section_name', $request->section_name)->first()->id;
 
-    //    $Products = Product::findOrFail($request->pro_id);
+       $Products = Product::findOrFail($request->pro_id);
+       $validatedData = $request->validate([
+        'Product_name' => 'required|max:255',
+        'section_name' => 'required'
+    ],[
 
-    //    $Products->update([
-    //    'Product_name' => $request->Product_name,
-    //    'description' => $request->description,
-    //    'section_id' => $id,
-    //    ]);
+        'Product_name.required' =>'يرجي ادخال اسم المنتج',
+        'section_id.required' =>'يرجي اختيار القسم ',
 
-    //    session()->flash('Edit', 'تم تعديل المنتج بنجاح');
-    //    return back();
+
+
+    ]);
+
+       $Products->update([
+       'Product_name' => $request->Product_name,
+       'description' => $request->description,
+       'section_id' => $id,
+       ]);
+
+       session()->flash('Edit', 'تم تعديل المنتج بنجاح');
+       return back();
         
     }
 
@@ -114,9 +125,9 @@ class ProductController extends Controller
      */
     public function destroy(Request $request)
     {
-        //  $Products = Product::findOrFail($request->pro_id);
-        //  $Products->delete();
-        //  session()->flash('delete', 'تم حذف المنتج بنجاح');
-        //  return back();
+         $Products = Product::findOrFail($request->pro_id);
+         $Products->delete();
+         session()->flash('delete', 'تم حذف المنتج بنجاح');
+         return back();
     }
 }

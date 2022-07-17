@@ -171,7 +171,7 @@
                 </div>
                 <div class="modal-body">
 
-                <form action="{{ route('sections.update') }}" method="post" autocomplete="off">
+                <form action="sections/update" method="post" autocomplete="off">
                         @csrf
                         <div class="form-group">
                             <input type="hidden" name="id" id="id" value="">
@@ -200,7 +200,7 @@
                     <h6 class="modal-title">حذف القسم</h6><button aria-label="Close" class="close" data-dismiss="modal"
                         type="button"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form action="{{ route('sections.destroy') }}" method="post">
+                <form action="sections/destroy" method="post">
                     {{ method_field('delete') }}
                     @csrf
                     <div class="modal-body">

@@ -5,10 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\InvoicesController;
 use App\Http\Controllers\SectionsController;
 use App\Http\Controllers\BlogController;
-
-
-
-
+use App\Http\Controllers\InvoicesDetailsController;
 use Illuminate\Support\Facades\Auth;
 
 /*
@@ -41,14 +38,20 @@ Auth::routes([
 
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-Route::get('/invoices', [InvoicesController::class, 'index'])->name('invoices');
 
-//secions routes
-Route::get('sections', [SectionsController::class,'index']);
-Route::post('/sections/store',   [SectionsController::class,   'store'])->name('sections.store');
-Route::post('/sections/update',  [SectionsController::class,  'update'])->name('sections.update');
-Route::post('/sections/destroy', [SectionsController::class, 'destroy'])->name('sections.destroy');;
-//end secions routes
+Route::resource('invoices', 'App\Http\Controllers\InvoicesController');
+ Route::get('/section/{id}', [InvoicesController::class,'getProducts']);
+ Route::get('/InvoicesDetails/{id}', [InvoicesDetailsController::class,'edit']);
+ Route::get('View_file/{invoice_number}/{file_name}', [InvoicesDetailsController::class,'open_file']);
+ Route::get('download/{invoice_number}/{file_name}', [InvoicesDetailsController::class,'get_file']);
+ Route::post('delete_file', [InvoicesDetailsController::class,'destroy']);
+
+
+
+
+
+Route::resource('sections', 'App\Http\Controllers\SectionsController');
+
 
 Route::resource('products', 'App\Http\Controllers\ProductController');
 
