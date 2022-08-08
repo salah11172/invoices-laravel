@@ -6,15 +6,17 @@ use App\Models\invoices;
 use App\Models\sections;
 use App\Models\Invoices_details;
 use App\Models\Invoices_attachments;
-
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
-
 use Illuminate\Support\Facades\Auth;
-
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\AddInvoice;
 
+use App\Exports\InvoicesExport;
+use App\Exports\InvoiceExport;
+use Maatwebsite\Excel\Facades\Excel;
 class InvoicesController extends Controller
 {
     /**
@@ -100,8 +102,8 @@ class InvoicesController extends Controller
         }
 
 
-        //    // $user = User::first();
-        //    // Notification::send($user, new AddInvoice($invoice_id));
+           $user = User::first();
+           Notification::send($user, new AddInvoice($invoice_id));
 
         // $user = User::get();
         // $invoices = invoices::latest()->first();
@@ -125,9 +127,10 @@ class InvoicesController extends Controller
      * @param  \App\Models\invoices  $invoices
      * @return \Illuminate\Http\Response
      */
-    public function show(invoices $invoices)
+    public function show($id)
     {
-        //
+        $invoices = invoices::where('id', $id)->first();
+        return view('invoices.status_update', compact('invoices'));
     }
 
     /**
@@ -136,9 +139,11 @@ class InvoicesController extends Controller
      * @param  \App\Models\invoices  $invoices
      * @return \Illuminate\Http\Response
      */
-    public function edit(invoices $invoices)
+    public function edit($id)
     {
-        //
+        $invoices = invoices::where('id', $id)->first();
+        $sections = sections::all();
+        return view('invoices.edit_invoice', compact('sections', 'invoices'));
     }
 
     /**
@@ -150,7 +155,24 @@ class InvoicesController extends Controller
      */
     public function update(Request $request, invoices $invoices)
     {
-        //
+         $invoices = invoices::findOrFail($request->invoice_id);
+        $invoices->update([
+            'invoice_number' => $request->invoice_number,
+            'invoice_Date' => $request->invoice_Date,
+            'Due_date' => $request->Due_date,
+            'product' => $request->product,
+            'section_id' => $request->Section,
+            'Amount_collection' => $request->Amount_collection,
+            'Amount_Commission' => $request->Amount_Commission,
+            'Discount' => $request->Discount,
+            'Value_VAT' => $request->Value_VAT,
+            'Rate_VAT' => $request->Rate_VAT,
+            'Total' => $request->Total,
+            'note' => $request->note,
+        ]);
+
+        session()->flash('edit', 'تم تعديل الفاتورة بنجاح');
+        return back();
     }
 
     /**
@@ -159,15 +181,133 @@ class InvoicesController extends Controller
      * @param  \App\Models\invoices  $invoices
      * @return \Illuminate\Http\Response
      */
-    public function destroy(invoices $invoices)
+    public function destroy(Request $request)
     {
-        //
+        $id = $request->invoice_id;
+        $invoices = invoices::where('id', $id)->first();
+        $Details = Invoices_attachments::where('invoice_id', $id)->first();
+
+         $id_page =$request->id_page;
+
+
+        if (!$id_page==2) {
+
+        if (!empty($Details->invoice_number)) {
+
+            Storage::disk('public_uploads')->deleteDirectory($Details->invoice_number);
+        }
+
+        $invoices->forceDelete();
+        session()->flash('delete_invoice');
+        return redirect('/invoices');
+
+        }
+
+        else {
+
+            $invoices->delete();
+            session()->flash('archive_invoice');
+            return redirect('/Archive');
     }
+}
 
     public function getProducts($id)
     {
         $products = DB::table("products")->where("section_id", $id)->pluck("Product_name", "id");
         return json_encode($products);
+    }
+
+    public function Status_Update($id, Request $request)
+    {
+        $invoices = invoices::findOrFail($id);
+
+        if ($request->Status === 'مدفوعة') {
+
+            $invoices->update([
+                'Value_Status' => 1,
+                'Status' => $request->Status,
+                'Payment_Date' => $request->Payment_Date,
+            ]);
+
+            invoices_Details::create([
+                'id_Invoice' => $request->invoice_id,
+                'invoice_number' => $request->invoice_number,
+                'product' => $request->product,
+                'Section' => $request->Section,
+                'Status' => $request->Status,
+                'Value_Status' => 1,
+                'note' => $request->note,
+                'Payment_Date' => $request->Payment_Date,
+                'user' => (Auth::user()->name),
+            ]);
+        }
+
+        else {
+            $invoices->update([
+                'Value_Status' => 3,
+                'Status' => $request->Status,
+                'Payment_Date' => $request->Payment_Date,
+            ]);
+            invoices_Details::create([
+                'id_Invoice' => $request->invoice_id,
+                'invoice_number' => $request->invoice_number,
+                'product' => $request->product,
+                'Section' => $request->Section,
+                'Status' => $request->Status,
+                'Value_Status' => 3,
+                'note' => $request->note,
+                'Payment_Date' => $request->Payment_Date,
+                'user' => (Auth::user()->name),
+            ]);
+        }
+        session()->flash('Status_Update');
+        return redirect('/invoices');
+
+    }
+
+    public function Invoice_Paid()
+    {
+        $invoices = Invoices::where('Value_Status', 1)->get();
+        return view('invoices.invoices_paid',compact('invoices'));
+    }
+
+    public function Invoice_unPaid()
+    {
+        $invoices = Invoices::where('Value_Status',2)->get();
+        return view('invoices.invoices_unpaid',compact('invoices'));
+    }
+
+    public function Invoice_Partial()
+    {
+        $invoices = Invoices::where('Value_Status',3)->get();
+        return view('invoices.invoices_Partial',compact('invoices'));
+    }
+
+    public function Print_invoice($id)
+    {
+        $invoices = invoices::where('id', $id)->first();
+        return view('invoices.Print_invoice',compact('invoices'));
+    }
+
+    public function export()
+    {
+
+        return Excel::download(new InvoiceExport, 'invoices.xlsx');
+
+    }
+
+
+    public function MarkAsRead_all (Request $request)
+    {
+
+        $userUnreadNotification= auth()->user()->unreadNotifications;
+
+        if($userUnreadNotification) {
+            $userUnreadNotification->markAsRead();
+            return back();
+        }
+
+
     }
 
 }

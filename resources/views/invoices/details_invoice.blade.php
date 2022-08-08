@@ -208,7 +208,7 @@
                                                     <div class="card-body">
                                                         <p class="text-danger">* صيغة المرفق pdf, jpeg ,.jpg , png </p>
                                                         <h5 class="card-title">اضافة مرفقات</h5>
-                                                        <form method="post" action="{{ url('/InvoiceAttachments') }}"
+                                                        <form method="post" action="{{ route('InvoiceAttachments.store') }}"
                                                             enctype="multipart/form-data">
                                                             {{ csrf_field() }}
                                                             <div class="custom-file">
